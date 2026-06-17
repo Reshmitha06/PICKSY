@@ -144,7 +144,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductSpecs specs={product.specifications} />
         </div>
         <div className="space-y-5">
-          <PriceComparison listings={product.listings} />
+          <PriceComparison listings={product.listings} productName={product.canonicalName} />
           <ScoreBreakdown scores={product.scores} />
         </div>
       </div>
