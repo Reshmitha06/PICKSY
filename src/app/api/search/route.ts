@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mockProducts } from "@/lib/mock-data";
 import { recommend } from "@/lib/engine/recommender";
+import { collectFromAllStores } from "@/lib/collectors";
+import { convertToNormalized } from "@/lib/engine/converter";
 import { Category, NormalizedProduct } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
@@ -10,6 +12,7 @@ export async function GET(request: NextRequest) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const sortBy = searchParams.get("sortBy") || "relevance";
+  const useLive = searchParams.get("live") !== "false"; // default: try live scraping
 
   if (!query) {
     return NextResponse.json(
@@ -21,8 +24,32 @@ export async function GET(request: NextRequest) {
   // Extract price constraints from natural language query
   const priceConstraints = extractPriceFromQuery(query);
 
-  // Filter mock products based on query
-  let filtered = filterProducts(mockProducts, query, category);
+  // Try live scraping first, fall back to mock data
+  let allProducts: NormalizedProduct[];
+
+  if (useLive) {
+    try {
+      console.log(`[Search] Live scraping for: "${query}"`);
+      const results = await collectFromAllStores(query, category || undefined);
+      const scrapedProducts = results.flatMap((r) => r.products);
+
+      if (scrapedProducts.length > 0) {
+        console.log(`[Search] Got ${scrapedProducts.length} products from live scraping`);
+        allProducts = convertToNormalized(scrapedProducts, query);
+      } else {
+        console.log("[Search] No live results, falling back to mock data");
+        allProducts = mockProducts;
+      }
+    } catch (error) {
+      console.error("[Search] Scraping failed, using mock data:", error);
+      allProducts = mockProducts;
+    }
+  } else {
+    allProducts = mockProducts;
+  }
+
+  // Filter products based on query
+  let filtered = filterProducts(allProducts, query, category);
 
   // Apply extracted price constraints
   if (priceConstraints.max) {
