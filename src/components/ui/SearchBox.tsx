@@ -3,6 +3,22 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+// Extend Window for Web Speech API
+interface SpeechRecognitionEvent {
+  results: { [key: number]: { [key: number]: { transcript: string } } };
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+
 interface SearchBoxProps {
   size?: "large" | "compact";
   initialQuery?: string;
@@ -48,6 +64,8 @@ export default function SearchBox({
   const [query, setQuery] = useState(initialQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -69,6 +87,50 @@ export default function SearchBox({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Voice search
+  function startListening() {
+    const SpeechRecognition =
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice search is not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-IN";
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+      setIsListening(false);
+      // Auto-search after voice input
+      router.push(`/search?q=${encodeURIComponent(transcript)}`);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }
+
+  function stopListening() {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -135,13 +197,40 @@ export default function SearchBox({
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="mr-2 flex-shrink-0 rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-300"
+              className="mr-1 flex-shrink-0 rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-300"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
+
+          {/* Mic button */}
+          <button
+            type="button"
+            onClick={isListening ? stopListening : startListening}
+            className={`mr-2 flex-shrink-0 rounded-full p-2 transition-all ${
+              isListening
+                ? "bg-red-500/20 text-red-400 animate-pulse"
+                : "text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300"
+            }`}
+            title={isListening ? "Stop listening" : "Voice search"}
+          >
+            <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isListening ? (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </>
+              ) : (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 10v2a7 7 0 01-14 0v-2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19v3m-4 0h8" />
+                  <rect x="9" y="2" width="6" height="11" rx="3" strokeWidth={1.5} />
+                </>
+              )}
+            </svg>
+          </button>
 
           {/* Submit Button */}
           <button
