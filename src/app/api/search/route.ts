@@ -86,6 +86,16 @@ function extractPriceFromQuery(query: string): { min?: number; max?: number } {
     if (!isNaN(price)) result.min = price;
   }
 
+  // "at/for/around/near/in X" → treat as ±20% range
+  const aroundMatch = q.match(/(?:at|for|around|near|in|@)\s*[₹]?\s*(\d+[k]?)/i);
+  if (aroundMatch && !underMatch && !overMatch) {
+    const price = parsePrice(aroundMatch[1]);
+    if (!isNaN(price)) {
+      result.min = Math.round(price * 0.8);
+      result.max = Math.round(price * 1.2);
+    }
+  }
+
   // "between X and Y"
   const betweenMatch = q.match(/between\s*[₹]?\s*(\d+[k]?)\s*(?:and|to|-)\s*[₹]?\s*(\d+[k]?)/i);
   if (betweenMatch) {
@@ -104,7 +114,7 @@ const STOP_WORDS = new Set([
   "and", "or", "in", "under", "below", "above", "over", "best",
   "good", "top", "less", "than", "more", "between", "to", "from",
   "buy", "get", "find", "show", "me", "my", "budget", "range",
-  "price", "rs", "rupees", "inr", "upto", "up", "around",
+  "price", "rs", "rupees", "inr", "upto", "up", "around", "at", "near",
 ]);
 
 function filterProducts(
@@ -116,7 +126,7 @@ function filterProducts(
   const cleanedQuery = query
     .toLowerCase()
     .replace(/(?:under|below|above|over|between)\s*[₹]?\s*\d+[k]?\s*(?:and|to|-)\s*[₹]?\s*\d+[k]?/gi, "")
-    .replace(/(?:under|below|above|over|less than|more than|upto|up to)\s*[₹]?\s*\d+[k]?/gi, "")
+    .replace(/(?:under|below|above|over|less than|more than|upto|up to|at|for|around|near)\s*[₹]?\s*\d+[k]?/gi, "")
     .replace(/\d+[k]?/g, "");
 
   const terms = cleanedQuery
