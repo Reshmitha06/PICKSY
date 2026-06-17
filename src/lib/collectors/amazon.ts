@@ -1,6 +1,6 @@
 import { Product, CollectorConfig } from "../types";
 import { BaseCollector } from "./base";
-import { launchBrowser, createPage } from "./browser";
+import { fetchHTML } from "./browser";
 import * as cheerio from "cheerio";
 
 export class AmazonCollector extends BaseCollector {
@@ -8,30 +8,17 @@ export class AmazonCollector extends BaseCollector {
   config: CollectorConfig = {
     enabled: true,
     rateLimit: 10,
-    timeout: 20000,
+    timeout: 15000,
   };
 
   async search(query: string, _category?: string): Promise<Product[]> {
-    let browser = null;
-
     try {
       console.log(`[Amazon] Searching for: "${query}"...`);
 
-      browser = await launchBrowser();
-      const page = await createPage(browser);
-
       const searchUrl = `https://www.amazon.in/s?k=${encodeURIComponent(query)}`;
-      await page.goto(searchUrl, {
-        waitUntil: "domcontentloaded",
-        timeout: this.config.timeout,
-      });
+      const html = await fetchHTML(searchUrl, this.config.timeout);
+      console.log(`[Amazon] HTML length: ${html.length} chars`);
 
-      // Wait for product results
-      await page
-        .waitForSelector('[data-component-type="s-search-result"]', { timeout: 10000 })
-        .catch(() => {});
-
-      const html = await page.content();
       const $ = cheerio.load(html);
       const products: Product[] = [];
 
@@ -40,15 +27,12 @@ export class AmazonCollector extends BaseCollector {
 
         const $el = $(element);
 
-        // Title
         const title = $el.find("h2 a span").text().trim();
         if (!title) return;
 
-        // URL
         const relativeUrl = $el.find("h2 a").attr("href");
         const url = relativeUrl ? `https://www.amazon.in${relativeUrl}` : "";
 
-        // Price
         const priceText = $el
           .find(".a-price .a-price-whole")
           .first()
@@ -57,7 +41,6 @@ export class AmazonCollector extends BaseCollector {
           .trim();
         const price = priceText ? parseInt(priceText) : 0;
 
-        // Original price
         const originalPriceText = $el
           .find(".a-price.a-text-price .a-offscreen")
           .first()
@@ -66,12 +49,10 @@ export class AmazonCollector extends BaseCollector {
           .trim();
         const originalPrice = originalPriceText ? parseInt(originalPriceText) : undefined;
 
-        // Rating
         const ratingText = $el.find(".a-icon-star-small .a-icon-alt").first().text();
         const ratingMatch = ratingText.match(/([\d.]+)/);
         const rating = ratingMatch ? parseFloat(ratingMatch[1]) : 0;
 
-        // Review count
         const reviewText = $el
           .find(".a-size-base.s-underline-text")
           .first()
@@ -80,7 +61,6 @@ export class AmazonCollector extends BaseCollector {
           .trim();
         const reviewCount = parseInt(reviewText) || 0;
 
-        // Image
         const imageUrl = $el.find(".s-image").attr("src") || "";
 
         if (price > 0) {
@@ -88,7 +68,7 @@ export class AmazonCollector extends BaseCollector {
             id: this.generateId("amazon", title),
             name: title,
             brand: this.extractBrand(title),
-            category: "smartphones", // will be recategorized by normalizer
+            category: "smartphones",
             price,
             originalPrice: originalPrice && originalPrice > price ? originalPrice : undefined,
             rating,
@@ -110,8 +90,6 @@ export class AmazonCollector extends BaseCollector {
     } catch (error) {
       console.error(`[Amazon] Error: ${error instanceof Error ? error.message : error}`);
       return [];
-    } finally {
-      if (browser) await browser.close();
     }
   }
 

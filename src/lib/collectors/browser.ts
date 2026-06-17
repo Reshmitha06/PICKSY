@@ -1,40 +1,36 @@
-// Shared browser launcher for all collectors
-// Uses Edge browser via puppeteer-core (same as WorthIT project)
-
-import type { Browser, Page } from "puppeteer-core";
-
-const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+// Shared HTTP fetch utility for all collectors
+// Uses plain fetch + cheerio — no browser needed, works through proxies
 
 const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0";
 
-let puppeteerModule: typeof import("puppeteer-core") | null = null;
+const HEADERS: Record<string, string> = {
+  "User-Agent": USER_AGENT,
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+  "Connection": "keep-alive",
+  "Upgrade-Insecure-Requests": "1",
+};
 
-async function getPuppeteer() {
-  if (!puppeteerModule) {
-    puppeteerModule = await import("puppeteer-core");
+export async function fetchHTML(url: string, timeout = 15000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      headers: HEADERS,
+      signal: controller.signal,
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.text();
+  } finally {
+    clearTimeout(timer);
   }
-  return puppeteerModule.default;
-}
-
-export async function launchBrowser(): Promise<Browser> {
-  const puppeteer = await getPuppeteer();
-  return puppeteer.launch({
-    executablePath: EDGE_PATH,
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--ignore-certificate-errors",
-    ],
-  });
-}
-
-export async function createPage(browser: Browser): Promise<Page> {
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1366, height: 768 });
-  await page.setUserAgent(USER_AGENT);
-  return page;
 }

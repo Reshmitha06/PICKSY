@@ -1,6 +1,6 @@
 import { Product, CollectorConfig } from "../types";
 import { BaseCollector } from "./base";
-import { launchBrowser, createPage } from "./browser";
+import { fetchHTML } from "./browser";
 import * as cheerio from "cheerio";
 
 export class CromaCollector extends BaseCollector {
@@ -8,30 +8,17 @@ export class CromaCollector extends BaseCollector {
   config: CollectorConfig = {
     enabled: true,
     rateLimit: 10,
-    timeout: 20000,
+    timeout: 15000,
   };
 
   async search(query: string, _category?: string): Promise<Product[]> {
-    let browser = null;
-
     try {
       console.log(`[Croma] Searching for: "${query}"...`);
 
-      browser = await launchBrowser();
-      const page = await createPage(browser);
-
       const searchUrl = `https://www.croma.com/searchB?q=${encodeURIComponent(query)}&text=${encodeURIComponent(query)}`;
-      await page.goto(searchUrl, {
-        waitUntil: "domcontentloaded",
-        timeout: this.config.timeout,
-      });
+      const html = await fetchHTML(searchUrl, this.config.timeout);
+      console.log(`[Croma] HTML length: ${html.length} chars`);
 
-      // Wait for product listings
-      await page
-        .waitForSelector("li.product-item", { timeout: 10000 })
-        .catch(() => {});
-
-      const html = await page.content();
       const $ = cheerio.load(html);
       const products: Product[] = [];
 
@@ -40,13 +27,11 @@ export class CromaCollector extends BaseCollector {
 
         const $el = $(element);
 
-        // Title
         const title =
           $el.find("h3.product-title a").text().trim() ||
           $el.find("[class*='product-title']").text().trim();
         if (!title || title.length < 5) return;
 
-        // URL
         const relativeUrl = $el.find("a[href*='/p/']").attr("href") || $el.find("h3 a").attr("href");
         const url = relativeUrl
           ? relativeUrl.startsWith("http")
@@ -54,15 +39,11 @@ export class CromaCollector extends BaseCollector {
             : `https://www.croma.com${relativeUrl}`
           : "";
 
-        // Price
         let price = 0;
         const priceEl = $el.find("[class*='new-price'], [class*='pdpPrice'], .amount");
         if (priceEl.length) {
-          const priceText = priceEl.first().text().replace(/[₹,\s]/g, "").trim();
-          price = parseInt(priceText) || 0;
+          price = parseInt(priceEl.first().text().replace(/[₹,\s]/g, "").trim()) || 0;
         }
-
-        // Fallback: look for any ₹ text
         if (price === 0) {
           $el.find("span, div").each((_i, el) => {
             const text = $(el).text().trim();
@@ -73,7 +54,6 @@ export class CromaCollector extends BaseCollector {
           });
         }
 
-        // Original price (MRP)
         let originalPrice: number | undefined;
         const mrpEl = $el.find("[class*='old-price'], [class*='mrpPrice']");
         if (mrpEl.length) {
@@ -81,16 +61,13 @@ export class CromaCollector extends BaseCollector {
           if (parsed && parsed > price) originalPrice = parsed;
         }
 
-        // Rating
         let rating = 0;
         const ratingEl = $el.find("[class*='rating']");
         if (ratingEl.length) {
-          const ratingText = ratingEl.first().text().trim();
-          const parsed = parseFloat(ratingText);
+          const parsed = parseFloat(ratingEl.first().text().trim());
           if (parsed > 0 && parsed <= 5) rating = parsed;
         }
 
-        // Image
         const imageUrl =
           $el.find("img").attr("data-src") ||
           $el.find("img").attr("src") ||
@@ -123,8 +100,6 @@ export class CromaCollector extends BaseCollector {
     } catch (error) {
       console.error(`[Croma] Error: ${error instanceof Error ? error.message : error}`);
       return [];
-    } finally {
-      if (browser) await browser.close();
     }
   }
 
