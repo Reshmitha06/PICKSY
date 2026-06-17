@@ -7,6 +7,7 @@ import AISummary from "@/components/search/AISummary";
 import FilterBar from "@/components/search/FilterBar";
 import FilterSidebar, { SearchFilters } from "@/components/search/FilterSidebar";
 import ResultsGrid from "@/components/search/ResultsGrid";
+import ScrapingTerminal from "@/components/search/ScrapingTerminal";
 import { useSearch } from "@/hooks/useSearch";
 
 const QUICK_SEARCHES = [
@@ -100,13 +101,10 @@ function SearchContent() {
         <SearchBox size="compact" initialQuery={query} />
       </div>
 
-      {/* Loading */}
+      {/* Loading — Live scraping terminal */}
       {loading && (
-        <div className="mt-20 flex flex-col items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-violet-500" />
-          <p className="mt-4 text-[13px] text-zinc-500">
-            Searching across stores...
-          </p>
+        <div className="mt-8 mx-auto max-w-2xl">
+          <ScrapingTerminal />
         </div>
       )}
 

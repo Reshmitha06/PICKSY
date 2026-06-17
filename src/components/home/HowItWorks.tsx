@@ -34,11 +34,11 @@ export default function HowItWorks() {
     <section className="relative border-t border-white/[0.04]">
       <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10">
         <div className="text-center">
-          <p className="section-label text-violet-400/80">How it works</p>
+          <p className="section-label tracking-[0.05em] text-violet-400/80">How it works</p>
           <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
             From search to decision
           </h2>
-          <p className="mt-3 text-[15px] text-zinc-500">
+          <p className="mt-3 text-[15px] text-zinc-500/70">
             Under 2 minutes. Every time.
           </p>
         </div>

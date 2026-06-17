@@ -1,16 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
+  --background: #121212;
   --foreground: #fafafa;
-  --card: #111113;
-  --card-hover: #18181b;
-  --border: #1e1e22;
-  --border-hover: #2a2a30;
+  --card: #1a1a1e;
+  --card-hover: #222226;
+  --border: #2a2a30;
+  --border-hover: #3a3a42;
   --muted: #71717a;
   --accent: #8b5cf6;
   --accent-hover: #a78bfa;
   --accent-subtle: rgba(139, 92, 246, 0.08);
+
+  /* Semantic colors */
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.08);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.08);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.08);
 }
 
 @theme inline {
@@ -66,7 +74,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -193,4 +201,34 @@ html {
   background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.04) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
+}
+
+/* Semantic colors */
+.text-success { color: var(--success); }
+.bg-success-soft { background: var(--success-bg); }
+.text-danger { color: var(--danger); }
+.bg-danger-soft { background: var(--danger-bg); }
+.text-warning { color: var(--warning); }
+.bg-warning-soft { background: var(--warning-bg); }
+
+/* Scraping terminal animation */
+@keyframes terminal-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.terminal-cursor {
+  animation: terminal-blink 1s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Store icon styling */
+.store-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NormalizedProduct } from "@/lib/types";
+import { StoreIcon } from "./StoreIcons";
 
 interface ProductCardProps {
   product: NormalizedProduct;
@@ -19,14 +20,6 @@ const badgeConfig = {
     label: "Premium",
     className: "bg-violet-500/10 text-violet-400 border-violet-500/20",
   },
-};
-
-const storeColors: Record<string, string> = {
-  amazon: "text-orange-400/70",
-  flipkart: "text-blue-400/70",
-  croma: "text-green-400/70",
-  "reliance-digital": "text-red-400/70",
-  "vijay-sales": "text-yellow-400/70",
 };
 
 export default function ProductCard({ product, badge }: ProductCardProps) {
@@ -115,14 +108,7 @@ export default function ProductCard({ product, badge }: ProductCardProps) {
           {/* Stores */}
           <div className="mt-3 flex flex-wrap gap-1.5">
             {product.listings.map((listing) => (
-              <span
-                key={listing.store}
-                className={`font-mono text-[10px] font-medium capitalize ${
-                  storeColors[listing.store] || "text-zinc-500"
-                }`}
-              >
-                {listing.store.replace("-", " ")}
-              </span>
+              <StoreIcon key={listing.store} store={listing.store} size={18} />
             ))}
           </div>
 

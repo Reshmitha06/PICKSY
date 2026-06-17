@@ -20,7 +20,7 @@ export default function Hero() {
       </div>
 
       {/* Fade overlay at bottom */}
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#09090b] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#121212] to-transparent" />
 
       <div className="relative mx-auto max-w-4xl px-6 pb-32 pt-24 sm:pt-32 lg:px-8">
         {/* Badge — Linear style */}
@@ -32,14 +32,14 @@ export default function Hero() {
         </div>
 
         {/* Headline — Raycast "Your shortcut to everything" style */}
-        <h1 className="font-display mt-8 text-center text-[2.75rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl animate-fade-in">
+        <h1 className="font-display mt-8 text-center text-[2.75rem] font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl sm:leading-[1.05] lg:text-7xl lg:leading-[1.05] animate-fade-in">
           Stop searching.
           <br />
           <span className="gradient-text">Start deciding.</span>
         </h1>
 
         {/* Subtitle — one crisp line like Vercel */}
-        <p className="mx-auto mt-6 max-w-lg text-center text-[17px] leading-relaxed text-zinc-400 animate-fade-in">
+        <p className="mx-auto mt-6 max-w-lg text-center text-[17px] leading-relaxed text-zinc-500/70 animate-fade-in">
           Picksy finds products across every store, compares them with AI, and tells you exactly what to buy.
         </p>
 
@@ -58,7 +58,7 @@ export default function Hero() {
                 onClick={() =>
                   router.push(`/search?q=${encodeURIComponent(search)}`)
                 }
-                className="rounded-full border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-[12px] text-zinc-500 transition-all hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-zinc-300"
+                className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3.5 py-1.5 text-[12px] font-medium text-zinc-400 transition-all hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-white hover:shadow-lg hover:shadow-violet-500/5"
               >
                 {search}
               </button>

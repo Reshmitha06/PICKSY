@@ -5,6 +5,7 @@ import ProductSpecs from "@/components/product/ProductSpecs";
 import ProsCons from "@/components/product/ProsCons";
 import PriceComparison from "@/components/product/PriceComparison";
 import ScoreBreakdown from "@/components/product/ScoreBreakdown";
+import ScoreBreakdownVisual from "@/components/product/ScoreBreakdownVisual";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -145,6 +146,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
         <div className="space-y-5">
           <PriceComparison listings={product.listings} productName={product.canonicalName} />
+          <ScoreBreakdownVisual product={product} />
           <ScoreBreakdown scores={product.scores} />
         </div>
       </div>

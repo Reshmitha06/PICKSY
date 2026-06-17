@@ -1,17 +1,18 @@
 import { ProductListing } from "@/lib/types";
 import { getStoreUrl } from "@/lib/store-urls";
+import { StoreIcon } from "@/components/ui/StoreIcons";
 
 interface PriceComparisonProps {
   listings: ProductListing[];
   productName: string;
 }
 
-const storeLogos: Record<string, { name: string; color: string }> = {
-  amazon: { name: "Amazon", color: "bg-orange-500" },
-  flipkart: { name: "Flipkart", color: "bg-blue-500" },
-  croma: { name: "Croma", color: "bg-green-600" },
-  "reliance-digital": { name: "Reliance Digital", color: "bg-red-500" },
-  "vijay-sales": { name: "Vijay Sales", color: "bg-yellow-500" },
+const storeNames: Record<string, string> = {
+  amazon: "Amazon",
+  flipkart: "Flipkart",
+  croma: "Croma",
+  "reliance-digital": "Reliance Digital",
+  "vijay-sales": "Vijay Sales",
 };
 
 export default function PriceComparison({ listings, productName }: PriceComparisonProps) {
@@ -29,10 +30,7 @@ export default function PriceComparison({ listings, productName }: PriceComparis
 
       <div className="mt-5 space-y-2.5">
         {sortedListings.map((listing) => {
-          const store = storeLogos[listing.store] || {
-            name: listing.store,
-            color: "bg-zinc-500",
-          };
+          const name = storeNames[listing.store] || listing.store;
           const isBest = listing.price === bestPrice;
           const savings = listing.originalPrice
             ? listing.originalPrice - listing.price
@@ -58,14 +56,10 @@ export default function PriceComparison({ listings, productName }: PriceComparis
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-md text-[11px] font-bold text-white ${store.color}`}
-                  >
-                    {store.name.charAt(0)}
-                  </div>
+                  <StoreIcon store={listing.store} size={32} />
                   <div>
                     <p className="text-[13px] font-medium text-zinc-300">
-                      {store.name}
+                      {name}
                     </p>
                     <div className="mt-0.5 flex items-center gap-1.5">
                       <span className="font-mono text-[10px] text-zinc-600">
@@ -103,7 +97,7 @@ export default function PriceComparison({ listings, productName }: PriceComparis
                     : "bg-white/[0.06] text-zinc-300 hover:bg-white/[0.1] hover:text-white"
                 }`}
               >
-                Buy on {store.name}
+                Buy on {name}
                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
