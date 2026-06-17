@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
 
   // Try live scraping first, fall back to mock data
   let allProducts: NormalizedProduct[];
+  let isLiveData = false;
 
   if (useLive) {
     try {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
       if (scrapedProducts.length > 0) {
         console.log(`[Search] Got ${scrapedProducts.length} products from live scraping`);
         allProducts = convertToNormalized(scrapedProducts, query);
+        isLiveData = true;
       } else {
         console.log("[Search] No live results, falling back to mock data");
         allProducts = mockProducts;
@@ -48,8 +50,11 @@ export async function GET(request: NextRequest) {
     allProducts = mockProducts;
   }
 
-  // Filter products based on query
-  let filtered = filterProducts(allProducts, query, category);
+  // Skip keyword filtering for live data (API already searched by keyword)
+  // Only filter mock data by keywords
+  let filtered = isLiveData
+    ? (category ? allProducts.filter((p) => p.category === category) : allProducts)
+    : filterProducts(allProducts, query, category);
 
   // Apply extracted price constraints
   if (priceConstraints.max) {

@@ -1,9 +1,14 @@
 import { AmazonCollector } from "./amazon";
 import { FlipkartCollector } from "./flipkart";
 import { CromaCollector } from "./croma";
+import { DummyJSONCollector } from "./dummyjson";
 import { CollectorResult } from "../types";
 
-const collectors = [
+// DummyJSON is always-available (free API, no blocking)
+// Real scrapers are tried in parallel but may fail due to bot detection
+const dummyCollector = new DummyJSONCollector();
+
+const scrapers = [
   new AmazonCollector(),
   new FlipkartCollector(),
   new CromaCollector(),
@@ -13,8 +18,11 @@ export async function collectFromAllStores(
   query: string,
   category?: string
 ): Promise<CollectorResult[]> {
+  // Run DummyJSON + real scrapers in parallel
+  const allCollectors = [dummyCollector, ...scrapers];
+
   const results = await Promise.allSettled(
-    collectors.map((c) => c.collect(query, category))
+    allCollectors.map((c) => c.collect(query, category))
   );
 
   return results
@@ -25,4 +33,4 @@ export async function collectFromAllStores(
     .map((r) => r.value);
 }
 
-export { AmazonCollector, FlipkartCollector, CromaCollector };
+export { AmazonCollector, FlipkartCollector, CromaCollector, DummyJSONCollector };
